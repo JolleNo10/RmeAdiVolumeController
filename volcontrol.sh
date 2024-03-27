@@ -184,17 +184,13 @@ performChange() {
 }
 
 #------------------------------------------------------------------------------------------------------------------
+timeStart=$(getTimestampWithMillis)
 
 # Check if the first input parameter is provided
 if [ $# -eq 0 ]; then
     echo "Error: First input parameter is missing." >&2  # Redirect error message to stderr
     exit 1
 fi
-
-
-timeStart=$(getTimestampWithMillis)
-
-
 
 # Set log level to uppercase if the second parameter is defined
 if [ ! -z "$2" ]; then 
@@ -217,11 +213,9 @@ case "$1" in
         adjustVolume "$1"
         ;;
     *)
-        log "ERROR" "Invalid input parameter. Please provide either 'up', 'down', or 'mute'." >&2  # Redirect error message to stderr
+        log "ERROR" "Invalid input parameter. Please provide either 'up', 'down', or 'mute'."
         exit 1
         ;;
 esac
 
-log "INFO" "Perf: Timeend: $(getTimestampWithMillis) diff: $((($(getTimestampWithMillis) - timeStart)))"
-
-#echo "Perf: Timeend: $(getTimestampWithMillis) diff: $((($(getTimestampWithMillis) - timeStart)))"
+log "DEBUG" "Perf: TimeEnd: $(getTimestampWithMillis) diff: $((($(getTimestampWithMillis) - timeStart)))"
