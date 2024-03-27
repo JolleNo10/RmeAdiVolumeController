@@ -64,8 +64,11 @@ Copy both scripts to your prefered script folder, make executable for your user.
 1. Change `rmeAdiMidiControlScript` location in `volcontrol.sh` to match your script folder.
 2. Change `rmeCurrentVolumeFile` and `logfile` location in `volcontrol.sh` to whatever you want.
 3. Change `midiConfig_device_id` in `volcontrol.sh` to match your RME ADI device. (default: RME ADI-2 DAC fs)
-3. Change `midiConfig_address` in `volcontrol.sh` to match your line out (default: Phone out on the RME ADI-2 DAC fs)
-5. Maybe check permissions of the files, haven't verified if it's needed.
+4. Change `midiConfig_address` in `volcontrol.sh` to match your line out (default: Phone out on the RME ADI-2 DAC fs)
+5. If you use volume buttons and not a wheel, consider changing `volumeTick` to 5 (0.5db) (default: 2 (0.2db))
+6. If you have high impedance Headphones, you might want to change the `highVolume` boundry in `volcontrol.sh`. However, make changes to this at your own risk.
+7. Consider changing `defaultVolume` in `volcontrol.sh` to something sensible for your equiptment
+8. Maybe check permissions of the files, haven't verified if it's needed.
 
 Volume values are set with a value of \<db * 10\>, so -100 will equal to -10db.
 
