@@ -18,7 +18,7 @@
     lowVolume=-1000 # limit min volume (for protection) will cycle back to defaultVolume
     volumeTick=5 # volume increase per tick
     volumeTickMultiplierTimeThreshold=500 # time between concurrent ticks for increased/faster volume change
-    volumeTickMultiplier=2 # volumeTick multiplier if ticks differ with less than volumeTickMultiplierTimeThreshold
+    volumeTickMultiplier=2 # volumeTick multiplier if ticks differ with less than volumeTickMultiplierTimeThreshold, 1 to disable
     defaultMute=0 # start/default mute state when you don't know the RME state
 
     rmeCurrentVolumeFile="/usr/local/bin/rmeAdiCurrentVolume" #store virtual RME state (only calculated from relative changes)
@@ -120,9 +120,7 @@ adjustVolume() {
         local tsDiff=$(($currentTime - $volumeTimestamp))
         local adjustedVolumeTick
 
-        #Adjusting tick with multiplier $volumeTickMultiplier if changing quicker than $volumeTickMultiplierTimeThreshold
-        
-
+        #Small volume change scaling, adjusting tick with multiplier $volumeTickMultiplier if changing quicker than $volumeTickMultiplierTimeThreshold
         if [ "$tsDiff" -lt $volumeTickMultiplierTimeThreshold ]; then
             adjustedVolumeTick=$(echo "$volumeTick * $volumeTickMultiplier" | bc)
             log "DEBUG" "Diff, ms since last volume adjust: $tsDiff, less than threshold"
@@ -198,7 +196,7 @@ if [ ! -z "$2" ]; then
 else
     log_level="${2:-ERROR}"  # Set to ERROR if not defined
 fi
-# Inverted check: Check if the third parameter is NOT set or NOT equal to 0 or 1
+
 if [ ! -z "$3" ] && ([ "$3" -eq 0 ] || [ "$3" -eq 1 ]); then
     enableLogging=$3
 fi
