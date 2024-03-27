@@ -12,7 +12,7 @@ Midi commands are based on https://www.rme-audio.de/downloads/adi2remote_midi_pr
 The byte conversion is based on a script provided by user danadam at https://www.audiosciencereview.com/forum/index.php?threads/rme-adi-2-remote-app-race-for-the-best-alternative-software-was-started-today.48352/#post-1733256 so all credit to him for the conversion code.
 
 These scripts were originally tailored to meet my requirements for my personal setup. 
-As a result, the code quality may reflect this !
+As a result, the code quality may reflect this ! Use at Your Own Risk!
 
 ## Table of Contents
 
@@ -87,7 +87,7 @@ Under the following terms:
 - Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
 - NonCommercial — You may not use the material for commercial purposes.
 
-- ## Disclaimer
+## Disclaimer
 
 **Use at Your Own Risk:**
 
