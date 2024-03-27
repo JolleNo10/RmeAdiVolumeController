@@ -61,9 +61,9 @@ There is no log rotation implemented, and it may slow down execution.
 Copy both scripts to your prefered script folder, make executable for your user.
 
 ## Configuration
-1. Change rmeAdiMidiControlScript location to match your script folder.
-2. Set rmeCurrentVolumeFile and logfile to whatever you want.
-3. Maybe check permissions of the files, haven't verified it.
+1. Change `rmeAdiMidiControlScript` location in `volcontrol.sh` to match your script folder.
+2. Change `rmeCurrentVolumeFile` and `logfile` in `volcontrol.sh` to whatever you want.
+3. Maybe check permissions of the files, haven't verified if it's needed.
 
 ## Contributing
 I welcome contributions from the community to improve this project! If you'd like to contribute, let me know!
