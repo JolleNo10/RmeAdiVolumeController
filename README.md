@@ -5,12 +5,14 @@ Scripts for interacting with the ADI-2 DAC / ADI-2 Pro / ADI-2/4 Pro SE through 
 Currently supports volume up, down and mute as this is all I needed when I wrote the script, but can easily be extended.
 Volume up and down was written to support a volume wheel controller.
 
+Works well with ie. Triggerhappy on Volumio.
+
 Midi commands are based on https://www.rme-audio.de/downloads/adi2remote_midi_protocol.zip
 
 The byte conversion is based on a script provided by user danadam at https://www.audiosciencereview.com/forum/index.php?threads/rme-adi-2-remote-app-race-for-the-best-alternative-software-was-started-today.48352/#post-1733256 so all credit to him for the conversion code.
 
 These scripts were originally tailored to meet my requirements for my personal setup. 
-As a result, the code quality may reflect this this!
+As a result, the code quality may reflect this as well!
 
 ## Table of Contents
 
