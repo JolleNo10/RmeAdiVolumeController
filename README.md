@@ -25,7 +25,7 @@ As a result, the code quality may reflect this !
 ## Features and usage
 *Usage:*
 
-```volcontrol.sh \<command\>```
+```volcontrol.sh <command>```
 - ```volcontrol.sh mute``` : Mutes the RME ADI unit. Concurrent triggers will toggle mute on and off.
 - ```volcontrol.sh down``` : Decreases volume by 0.2dB (configurable value).
 - ```volcontrol.sh up``` : Increases volume by 0.2dB (configurable value).
@@ -45,7 +45,7 @@ However, make changes to this at your own risk.
 ### Debugging and logging
 You can debug the execution by adding LogLevel and logoverride as parameters:
 
-```volcontrol.sh \<command\> \<loglevel\> \<logoverride\>```
+```volcontrol.sh <command> <loglevel> <logoverride>```
 
 Example: 
 ```volcontrol.sh up DEBUG 1```
