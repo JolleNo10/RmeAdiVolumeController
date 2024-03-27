@@ -63,7 +63,9 @@ Copy both scripts to your prefered script folder, make executable for your user.
 ## Configuration
 1. Change `rmeAdiMidiControlScript` location in `volcontrol.sh` to match your script folder.
 2. Change `rmeCurrentVolumeFile` and `logfile` in `volcontrol.sh` to whatever you want.
-3. Maybe check permissions of the files, haven't verified if it's needed.
+3. Change `midiConfig_device_id` to match your RME ADI device. (default: RME ADI-2 DAC fs)
+3. Change `midiConfig_address` to match your line out (default: Phone out on the RME ADI-2 DAC fs)
+5. Maybe check permissions of the files, haven't verified if it's needed.
 
 Volume values are set with a value of \<db * 10\>, so -100 will equal to -10db.
 
