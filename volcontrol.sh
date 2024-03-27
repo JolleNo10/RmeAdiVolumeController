@@ -1,37 +1,37 @@
 #!/bin/bash
 
-# Default log level
-log_level="${2:-ERROR}"
-enableLogging=0
+################################################################################
+# Script Name: volcontrol.sh
+# Description: This script changes volume up/down/mute on the RME ADI DAC. Can be used with a hotkey daemon like triggerhapp or home assistant.
+# Author: Jostein Guldal
+# GitHub Repository: https://github.com/JolleNo10/RmeAdiVolumeController/
+################################################################################
 
-# Global variables
-defaultVolume=-350
-highVolume=-200
-lowVolume=-1000
-volumeTick=5
-volumeTickMultiplierTimeThreshold=500
-volumeTickMultiplier=2
-defaultMute=0
 
-rmeCurrentVolumeFile="/usr/local/bin/rmeAdiCurrentVolume"
-logfile="/usr/local/bin/log"
+# Configuration
+    # Default log level
+    enableLogging=0 # 1 enable, 0 disable
 
-# Based on https://www.rme-audio.de/downloads/adi2remote_midi_protocol.zip
-# 0x71 - ADI-2 DAC # 0x72 - ADI-2 Pro # 0x73 - ADI-2/4 Pro SE
-midiConfig_device_id=0x71
+    # Global variables
+    defaultVolume=-350 # start/default volume state when you don't know the RME state
+    highVolume=-200 # limit max volume (for protection) will cycle back to defaultVolume
+    lowVolume=-1000 # limit min volume (for protection) will cycle back to defaultVolume
+    volumeTick=5 # volume increase per tick
+    volumeTickMultiplierTimeThreshold=500 # time between concurrent ticks for increased/faster volume change
+    volumeTickMultiplier=2 # volumeTick multiplier if ticks differ with less than volumeTickMultiplierTimeThreshold
+    defaultMute=0 # start/default mute state when you don't know the RME state
 
-# 0x02 - Send Parameter(s) to device
-midiConfig_command_id=0x02
+    rmeCurrentVolumeFile="/usr/local/bin/rmeAdiCurrentVolume" #store virtual RME state (only calculated from relative changes)
+    logfile="/usr/local/bin/log" #log file location
+    rmeAdiMidiControlScript="/usr/local/bin/rmeAdiMidiControl.sh" #RME ADI MIDI script location
 
-# 6 - Phones Channel Settings
-midiConfig_address=6
-
-# 15 - Mute
-midiConfig_index_mute=15
-
-# 12 - Volume
-midiConfig_index_volume=12
-
+    # Based on https://www.rme-audio.de/downloads/adi2remote_midi_protocol.zip
+    midiConfig_device_id=0x71 # 0x71 - ADI-2 DAC # 0x72 - ADI-2 Pro # 0x73 - ADI-2/4 Pro SE
+    midiConfig_command_id=0x02 # 0x02 - Send Parameter(s) to device
+    midiConfig_address=6 # 6 - Phones Channel Settings
+    midiConfig_index_mute=15 # 15 - Mute
+    midiConfig_index_volume=12 # 12 - Volume
+# --
 
 log() {
     local loglevel="$1"
@@ -39,6 +39,9 @@ log() {
     if [ "$enableLogging" -eq 0 ]; then
         return 0;
     fi
+
+    local logdate=$(date +"%Y-%m-%d %H:%M:%S")
+    local logentry="$logdate [$loglevel] $logmessage"
         
     # Check if log file exists, create if it doesn't
     if [ ! -f "$logfile" ]; then
@@ -46,11 +49,11 @@ log() {
     fi
 
     if [ "$loglevel" = "DEBUG" ] && ([ "$log_level" = "DEBUG" ]); then
-        echo "$(date +"%Y-%m-%d %H:%M:%S") [DEBUG] $logmessage" >> $logfile
+        echo "$logentry" >> $logfile
     elif [ "$loglevel" = "INFO" ] && ( [ "$log_level" = "INFO" ] || [ "$log_level" = "DEBUG" ]); then
-        echo "$(date +"%Y-%m-%d %H:%M:%S") [INFO] $logmessage" >> $logfile
+        echo "$logentry" >> $logfile
     elif [ "$loglevel" = "ERROR" ] && ( [ "$log_level" = "INFO" ] || [ "$log_level" = "DEBUG" ] || [ "$log_level" = "ERROR" ]); then
-        echo "$(date +"%Y-%m-%d %H:%M:%S") [ERROR] $logmessage" >> $logfile
+        echo "$logentry" >> $logfile
     fi
 }
 
@@ -66,16 +69,15 @@ readStateFromFile() {
 
         # Use read command to split the string into variables
         IFS=',' read -r volumeTimestamp currentVolume currentMute < "$file"
-        #read -r volumeTimestamp currentVolume < "$file"
 
         if checkVolume "$currentVolume"; then
             log "DEBUG" "Read value from file is valid: $currentVolume"
         else
             log "ERROR" "Read value from file is not valid: $currentVolume"
-            echo "" > "$file"  # Deleting file content by overwriting it with an empty string
             volumeTimestamp=$(getTimestampWithMillis)
             currentVolume=$defaultVolume
             currentMute=$defaultMute
+            writeStateToFile $currentVolume $currentMute
         fi
     else
         log "ERROR" "File rmeAdiCurrentVolume.txt not found."
@@ -92,18 +94,12 @@ writeStateToFile() { #adjustedVolume="$1" adjustedMute="$2"
 checkVolume() {
     local volume="$1"
     
-    # Regular expression to check if the volume is an integer
-    local integer_regex='^-?[0-9]+$'
-
-    if [[ ! $volume =~ $integer_regex ]]; then
-        log "ERROR" "Volume Check: is not an integer $volume value."
+    # Check if volume is an integer and within the range
+    if ! (( volume >= lowVolume && volume <= highVolume )); then
+        log "ERROR" "Volume Check: Volume is not within the range of $lowVolume to $highVolume or not an integer value: $volume."
         return 1
     fi
 
-    if (( $(bc <<< "$volume < $lowVolume") )) || (( $(bc <<< "$volume > $highVolume") )); then
-        log "ERROR" "Volume Check: Volume is not within the range of $lowVolume to $highVolume."
-        return 1
-    fi
     log "DEBUG" "Volume Check ok: $volume"
     return 0
 }
@@ -111,31 +107,31 @@ checkVolume() {
 adjustVolume() {
     local mode=$1
 
+    # Read state from file and extract currentVolume and currentMute
     readStateFromFile
-    #currentVolume
-    #currentMute
 
-    local midiconfig
-    local midiConfig_index
     local value
+    local midiConfig_index
     local state
 
     if ([ "$mode" = "up" ] || [ "$mode" = "down" ]); then
+        # Calculate adjusted volume tick based on time difference
         local currentTime=$(getTimestampWithMillis)
         local tsDiff=$(($currentTime - $volumeTimestamp))
+        local adjustedVolumeTick
 
         #Adjusting tick with multiplier $volumeTickMultiplier if changing quicker than $volumeTickMultiplierTimeThreshold
-        log "DEBUG" "Diff, ms since last volume adjust: $tsDiff"
+        
 
         if [ "$tsDiff" -lt $volumeTickMultiplierTimeThreshold ]; then
             adjustedVolumeTick=$(echo "$volumeTick * $volumeTickMultiplier" | bc)
-            log "DEBUG" "Diff less than threshold"
+            log "DEBUG" "Diff, ms since last volume adjust: $tsDiff, less than threshold"
         else
             adjustedVolumeTick=$volumeTick
-            log "DEBUG" "Diff normal threshold"
+            log "DEBUG" "Diff, ms since last volume adjust: $tsDiff, outside threshold"
         fi
         
-        log "DEBUG" "Adjusting volume $mode volumeTick: $volumeTick adjustedVolumeTick: $adjustedVolumeTick"
+        log "DEBUG" "Adjusting volume $mode volumeTick: $volumeTick, adjustedVolumeTick: $adjustedVolumeTick"
 
         #Setting new volume
         if [ "$mode" = "up" ]; then
@@ -146,7 +142,7 @@ adjustVolume() {
 
         #Check volume value
         if checkVolume "$value"; then
-            log "INFO" "All checks ok, setting adjusted volume to $1"
+            log "INFO" "All checks ok, setting adjusted volume: $1, volumeTick: $volumeTick, adjustedVolumeTick: $adjustedVolumeTick"
         else
             log "ERROR" "Volume not valid $value Restting volume to $defaultVolume"
             value=$defaultVolume
@@ -172,17 +168,16 @@ adjustVolume() {
     writeStateToFile $state
 }
 
-
 performChange() {
-    log "DEBUG" "Trying to adjusti value to $1"
     local adjustedValue="$1"
     local midiconfig="$2 $3 $4 $5"
 
-    error=$(/usr/local/bin/rmeAdiMidiControl.sh $adjustedValue $midiconfig $enableLogging $log_level $logfile 2>&1)
-    log "DEBUG" "$adjustedValue $midiconfig $enableLogging $log_level $logfile"
+    log "DEBUG" "Perform change, variables $adjustedValue $midiconfig $enableLogging $log_level $logfile"
     
+    error=$(bash "$rmeAdiMidiControlScript" $adjustedValue $midiconfig $enableLogging $log_level $logfile 2>&1)
+
     if [ $? -eq 0 ]; then
-        log "DEBUG" "Midi Script call succeeded."
+        log "DEBUG" "MidiScript call succeeded."
     else
         log "ERROR" "MidiScript call failed with error: $error"
     fi
@@ -192,32 +187,41 @@ performChange() {
 
 # Check if the first input parameter is provided
 if [ $# -eq 0 ]; then
-    echo "Error: First input parameter is missing."
+    echo "Error: First input parameter is missing." >&2  # Redirect error message to stderr
     exit 1
 fi
 
-# Check if debug parameter is provided
-# Check if the second parameter is defined
-if [ -n "$2" ]; then
-    # Convert the second parameter to uppercase and set log level
-    log_level=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+
+timeStart=$(getTimestampWithMillis)
+
+
+
+# Set log level to uppercase if the second parameter is defined
+if [ ! -z "$2" ]; then 
+    log_level="${2^^}"
+else
+    log_level="${2:-ERROR}"  # Set to ERROR if not defined
+fi
+# Inverted check: Check if the third parameter is NOT set or NOT equal to 0 or 1
+if [ ! -z "$3" ] && ([ "$3" -eq 0 ] || [ "$3" -eq 1 ]); then
+    enableLogging=$3
 fi
 
 log "DEBUG" "-- SCRIPT STARTED --"
-log "DEBUG" "Perf: Timestart: $(getTimestampWithMillis)"
-timeStart=$(getTimestampWithMillis)
+log "DEBUG" "Perf: Timestart: $timeStart"
 
 # Check the value of the first input parameter and call the appropriate function
-if ([ "$1" = "up" ] || [ "$1" = "down" ] || [ "$1" = "mute" ]); then
-    log "DEBUG" "Adjusting volume $1"
-    adjustVolume $1
-else
-    log "ERROR" "Invalid input parameter. Please provide either 'up' or 'down'."
-    exit 1
-fi
-timeEnd=$(getTimestampWithMillis)
+case "$1" in
+    up|down|mute)
+        log "DEBUG" "Adjusting volume $1"
+        adjustVolume "$1"
+        ;;
+    *)
+        log "ERROR" "Invalid input parameter. Please provide either 'up', 'down', or 'mute'." >&2  # Redirect error message to stderr
+        exit 1
+        ;;
+esac
 
-perfDiff=$(($timeEnd - $timeStart))
+log "INFO" "Perf: Timeend: $(getTimestampWithMillis) diff: $((($(getTimestampWithMillis) - timeStart)))"
 
-log "INFO" "Perf: Timeend: $timeEnd diff: $perfDiff"
-#echo "Perf: Timeend: $timeEnd diff: $perfDiff"
+#echo "Perf: Timeend: $(getTimestampWithMillis) diff: $((($(getTimestampWithMillis) - timeStart)))"
