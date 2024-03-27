@@ -65,6 +65,8 @@ Copy both scripts to your prefered script folder, make executable for your user.
 2. Change `rmeCurrentVolumeFile` and `logfile` in `volcontrol.sh` to whatever you want.
 3. Maybe check permissions of the files, haven't verified if it's needed.
 
+Volume values are set with a value of \<db * 10\>. So -100 = -10db.
+
 ## Contributing
 I welcome contributions from the community to improve this project! If you'd like to contribute, let me know!
 
