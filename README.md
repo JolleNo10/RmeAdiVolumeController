@@ -14,13 +14,11 @@ As a result, the code quality may reflect this this!
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Usage](#usage)
-5. [Configuration](#configuration)
-6. [Contributing](#contributing)
-7. [License](#license)
+1. [Introduction](#Features)
+2. [Installation](#installation)
+3. [Configuration](#configuration)
+4. [Contributing](#contributing)
+5. [License](#license)
 
 ## Features and usage
 *Usage*
@@ -38,6 +36,7 @@ Because I was afraid of blowing up my headphones during scripting, a max and min
 Can be configured to match the The RME ADI max and min values: min: 1140 (-114db) and max: 60 (6db). Change at your own risk. 
 
 Usage:
+volcontrol.sh up <command>
 - volcontrol.sh mute : Mutes the RME ADI unit. Concurrent triggers will toggle mute on and off.
 - volcontrol.sh down : Decreases volume by 0.2dB (configurable value).
 - volcontrol.sh up : Increases volume by 0.2dB (configurable value).
@@ -54,6 +53,19 @@ If the volume is set outside these boundaries, it will cycle back to `defaultVol
 You can configure these limits to match the RME ADI's maximum and minimum values: min: 1140 (-114dB) and max: 60 (6dB). If you have high impedance Headphones, you might want to change the highVolume boundry.
 However, make changes to this at your own risk.
 
+### Debugging and logging
+You can debug the execution by adding LogLevel and logoverride as parameters:
+
+volcontrol.sh up <loglevel> <logoverride>
+
+For example: 
+volcontrol.sh up DEBUG 1
+
+There are three log levels: DEBUG, INFO, and ERROR. 
+"logoverride" overrides the enableLogging configuration.
+
+I suggest using logging only for debugging purposes. 
+There are no log rotation implemented, and it may slow down execution.
 
 ## Installation
 Copy both scripts to your prefered script folder, make executable for your user.
