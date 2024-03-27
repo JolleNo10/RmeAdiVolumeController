@@ -130,7 +130,7 @@ fi
 
 
 value=$((value))
-
+#The byte conversion is based on a script provided by user danadam at https://www.audiosciencereview.com/forum/index.php?threads/rme-adi-2-remote-app-race-for-the-best-alternative-software-was-started-today.48352/#post-1733256 
 # split "index" into 3 high and 2 low bits
 index_hi_mask=$(( (1 << 3) - 1 ))
 index_lo_mask=$(( (1 << 2) - 1 ))
